@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "World Clock · 세계 시계",
+  "version": "1.0.0",
+  "description": "전 세계 시계를 한곳에 모아 한국 시간 기준으로 상대국 현지 시간과 업무시간을 바로 확인하는 세계 시계.",
+  "default_locale": "ko",
+  "permissions": ["storage", "sidePanel"],
+  "action": {
+    "default_title": "World Clock 열기 (사이드 패널)",
+    "default_icon": {
+      "16": "shared/icon-16.png",
+      "48": "shared/icon-48.png",
+      "128": "shared/icon-128.png"
+    }
+  },
+  "side_panel": {
+    "default_path": "shared/index.html"
+  },
+  "chrome_url_overrides": {
+    "newtab": "shared/index.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "16": "shared/icon-16.png",
+    "48": "shared/icon-48.png",
+    "128": "shared/icon-128.png"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "name": "world-clock-gadget",
+  "version": "1.0.0",
+  "description": "전 세계 시계를 항상 위에 띄워두는 데스크톱 가젯 (World Clock desktop gadget)",
+  "author": "Aramhuvis",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win",
+    "pack": "electron-builder --dir"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.aramhuvis.worldclock",
+    "productName": "World Clock",
+    "directories": {
+      "output": "../dist",
+      "buildResources": "../assets"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "shared/**/*"
+    ],
+    "extraResources": [
+      { "from": "../assets", "to": "assets" }
+    ],
+    "extraMetadata": { "main": "main.js" },
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "../assets/icon.ico",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "World Clock"
+    }
+  }
+}

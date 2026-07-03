@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+electron/node_modules/
+
+# Build output (installer is distributed via GitHub Releases, not committed)
+dist/
+electron/shared/
+*.log
+electron/build-out.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor/session
+.claude/
