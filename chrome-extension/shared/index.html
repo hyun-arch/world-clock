@@ -10,12 +10,12 @@
   <div id="app" class="app">
     <!-- Title bar: draggable in Electron; hosts window + app controls -->
     <header id="titlebar" class="titlebar">
-      <div class="titlebar__left">
-        <span class="brand">🕐 World Clock</span>
-        <span id="anchorClock" class="anchor-now" title="한국 표준시(KST) 기준"></span>
+      <div class="titlebar__brand">
+        <span class="brand__dot"></span>
+        <span class="brand">World Clock</span>
       </div>
-      <div class="titlebar__right no-drag">
-        <button id="btnFormat" class="chip" title="12/24시간 전환">24h</button>
+      <div class="titlebar__actions no-drag">
+        <button id="btnFormat" class="seg" title="12/24시간 전환">24h</button>
         <button id="btnAdd" class="icon-btn" title="도시 추가">＋</button>
         <button id="btnSettings" class="icon-btn" title="설정">⚙</button>
         <!-- Electron-only window controls, shown by app.js when desktop API exists -->
@@ -27,19 +27,30 @@
       </div>
     </header>
 
-    <!-- Meeting-time slider -->
-    <section id="planner" class="planner no-drag">
-      <div class="planner__row">
-        <label class="planner__label">
-          <span id="plannerTime" class="planner__time">지금</span>
-          <span class="planner__hint">한국 시간 기준 회의 시각</span>
-        </label>
-        <button id="btnNow" class="chip chip--accent" title="현재 시각으로">지금</button>
+    <!-- Hero: the anchor (Korea / KST) shown large, with the meeting planner -->
+    <section id="hero" class="hero no-drag">
+      <div class="hero__top">
+        <div class="hero__loc">
+          <span class="hero__badge">KST · 기준</span>
+          <h1 class="hero__city" id="heroCity">서울</h1>
+          <span class="hero__country" id="heroCountry">대한민국</span>
+        </div>
+        <div class="hero__now">
+          <div class="hero__time" id="heroTime">--:--</div>
+          <div class="hero__date" id="heroDate"></div>
+        </div>
       </div>
-      <input id="slider" class="slider" type="range" min="-720" max="720" step="15" value="0"
-             aria-label="한국 시간 기준 회의 시각 슬라이더" />
-      <div class="planner__scale">
-        <span>−12h</span><span>−6h</span><span>지금</span><span>+6h</span><span>+12h</span>
+
+      <div class="planner">
+        <div class="planner__row">
+          <span id="plannerTime" class="planner__time">한국 시간 기준 회의 시각</span>
+          <button id="btnNow" class="seg seg--accent" title="현재 시각으로">지금</button>
+        </div>
+        <input id="slider" class="slider" type="range" min="-720" max="720" step="15" value="0"
+               aria-label="한국 시간 기준 회의 시각 슬라이더" />
+        <div class="planner__scale">
+          <span>−12h</span><span>−6h</span><span>지금</span><span>+6h</span><span>+12h</span>
+        </div>
       </div>
     </section>
 

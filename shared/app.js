@@ -5,6 +5,18 @@
 (function () {
   const $ = (sel) => document.querySelector(sel);
   const ANCHOR_ID = 'seoul';
+  const WD_KO = ['일', '월', '화', '수', '목', '금', '토'];
+  const MONTH_NUM = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
+
+  // Windows can't render regional-indicator flag emoji (they show as "KR").
+  // Turn the flag into its clean 2-letter ISO code for a monogram avatar instead.
+  function flagToCode(flag) {
+    const cp = [...String(flag)].map((c) => c.codePointAt(0));
+    if (cp.length >= 2 && cp[0] >= 0x1f1e6 && cp[0] <= 0x1f1ff) {
+      return String.fromCharCode(cp[0] - 0x1f1e6 + 65) + String.fromCharCode(cp[1] - 0x1f1e6 + 65);
+    }
+    return String(flag).slice(0, 2).toUpperCase();
+  }
 
   // ── State ────────────────────────────────────────────────────
   const DEFAULT_STATE = {
@@ -58,12 +70,12 @@
     el.dataset.id = city.id;
     el.draggable = true;
     el.innerHTML = `
-      <span class="card__flag">${city.flag}</span>
+      <div class="card__avatar">
+        <span class="card__code">${flagToCode(city.flag)}</span>
+        <i class="card__status"></i>
+      </div>
       <div class="card__info">
-        <div class="card__city">
-          <span class="card__name"></span>
-          ${city.id === ANCHOR_ID ? '<span class="card__badge">기준</span>' : ''}
-        </div>
+        <div class="card__city"><span class="card__name"></span></div>
         <div class="card__meta">
           <span class="card__glyph"></span>
           <span class="card__offset"></span>
@@ -73,7 +85,7 @@
         <div class="card__time"></div>
         <div class="card__date"></div>
       </div>
-      ${city.id === ANCHOR_ID ? '' : '<button class="card__remove" title="삭제">✕</button>'}
+      <button class="card__remove" title="삭제">✕</button>
     `;
     const nameEl = el.querySelector('.card__name');
     nameEl.textContent = `${city.cityKo} · ${city.countryKo}`;
@@ -85,23 +97,48 @@
     return el;
   }
 
+  // The anchor (Seoul) lives in the hero, so the list shows every other city.
+  function listCities() {
+    return state.cities.filter((id) => id !== ANCHOR_ID);
+  }
+
   function renderCards() {
     clocksEl.innerHTML = '';
-    if (state.cities.length === 0) {
-      clocksEl.innerHTML = '<div class="empty">＋ 버튼으로 도시를 추가하세요.</div>';
+    const ids = listCities();
+    if (ids.length === 0) {
+      clocksEl.innerHTML = '<div class="empty">＋ 버튼으로 도시를 추가해 보세요.</div>';
       return;
     }
-    for (const id of state.cities) {
+    for (const id of ids) {
       const city = TZ.getById(id);
       if (city) clocksEl.appendChild(buildCard(city));
     }
     updateCards();
   }
 
+  // Format a compact time payload into card/hero HTML.
+  function timeHTML(t) {
+    return `${t.main}` +
+      (t.sec ? `<span class="sec">:${t.sec}</span>` : '') +
+      (t.ampm ? `<span class="ampm">${t.ampm}</span>` : '');
+  }
+
+  // The hero shows the anchor (Korea / KST) large.
+  function updateHero(now) {
+    const city = TZ.getById(ANCHOR_ID);
+    const p = ClockCore.getParts(city.tz, now);
+    const wd = ClockCore.weekdayIndex(city.tz, now);
+    $('#heroTime').innerHTML = timeHTML(formatTime(p.hour, p.minute, p.second));
+    $('#heroDate').textContent =
+      `${MONTH_NUM[p.month] || p.month}월 ${parseInt(p.day, 10)}일 (${WD_KO[wd]}) · ` +
+      (ClockCore.isDaytime(p.hour) ? '☀️ 낮' : '🌙 밤');
+  }
+
   // Refresh the live values on every card (called each tick + on slider move).
   function updateCards() {
     const now = baseDate();
     const anchorDayKey = dayKey(ClockCore.ANCHOR_TZ, now);
+    updateHero(now);
 
     for (const el of clocksEl.querySelectorAll('.card')) {
       const city = TZ.getById(el.dataset.id);
@@ -111,23 +148,17 @@
       const isWeekend = wd === 0 || wd === 6;
       const st = ClockCore.businessState(p.hour, { isWeekend });
 
-      // business-hours border color
-      el.classList.remove('state-work', 'state-edge', 'state-off', 'card--anchor');
+      // business-hours status dot
+      el.classList.remove('state-work', 'state-edge', 'state-off');
       el.classList.add('state-' + st);
-      if (city.id === ANCHOR_ID) el.classList.add('card--anchor');
 
       // time
-      const t = formatTime(p.hour, p.minute, p.second);
-      const timeEl = el.querySelector('.card__time');
-      timeEl.innerHTML = `${t.main}` +
-        (t.sec ? `<span class="sec">:${t.sec}</span>` : '') +
-        (t.ampm ? `<span class="ampm">${t.ampm}</span>` : '');
+      el.querySelector('.card__time').innerHTML = timeHTML(formatTime(p.hour, p.minute, p.second));
 
       // date + day-diff marker (relative to Korea's calendar day)
-      const WD_KO = ['일', '월', '화', '수', '목', '금', '토'];
       const dayCls = dayKey(city.tz, now) !== anchorDayKey ? ' class="nextday"' : '';
       el.querySelector('.card__date').innerHTML =
-        `<span${dayCls}>${p.month} ${p.day} (${WD_KO[wd]})</span>`;
+        `<span${dayCls}>${MONTH_NUM[p.month] || p.month}월 ${parseInt(p.day, 10)}일 (${WD_KO[wd]})</span>`;
 
       // offset vs Korea
       const offEl = el.querySelector('.card__offset');
@@ -139,11 +170,6 @@
       // day/night glyph
       el.querySelector('.card__glyph').textContent = ClockCore.isDaytime(p.hour) ? '☀️' : '🌙';
     }
-
-    // Title-bar anchor clock (always live Korea time, ignores nothing but format)
-    const ap = ClockCore.getParts(ClockCore.ANCHOR_TZ, now);
-    const at = formatTime(ap.hour, ap.minute, ap.second);
-    $('#anchorClock').textContent = `KST ${at.main}${at.ampm ? ' ' + at.ampm : ''}`;
   }
 
   // A calendar-day identifier in a tz, for detecting date differences.
@@ -212,7 +238,7 @@
     const ap = ClockCore.getParts(ClockCore.ANCHOR_TZ, now);
     const t = formatTime(ap.hour, ap.minute, 0);
     if (sliderOffsetMin === 0) {
-      plannerTime.textContent = '지금';
+      plannerTime.textContent = '한국 시간 기준 회의 시각';
       plannerTime.classList.remove('shifted');
     } else {
       const sign = sliderOffsetMin > 0 ? '+' : '−';
@@ -253,9 +279,9 @@
       const added = state.cities.includes(c.id);
       li.className = 'result' + (added ? ' result--added' : '');
       li.innerHTML = `
-        <span class="result__flag">${c.flag}</span>
+        <span class="result__code">${flagToCode(c.flag)}</span>
         <span class="result__text">
-          <div class="result__city">${c.cityKo} <span style="color:var(--text-faint)">${c.city}</span></div>
+          <div class="result__city">${c.cityKo}<span class="en">${c.city}</span></div>
           <div class="result__country">${c.countryKo}</div>
         </span>
         <span class="result__off">${ClockCore.formatOffsetVsAnchor(c.tz, now)}</span>`;
@@ -356,6 +382,14 @@
     if (!Platform.isElectron) document.body.classList.add('standalone');
 
     await loadState();
+
+    // Fill in the anchor (hero) identity once.
+    const anchor = TZ.getById(ANCHOR_ID);
+    if (anchor) {
+      $('#heroCity').textContent = anchor.cityKo;
+      $('#heroCountry').textContent = anchor.countryKo;
+    }
+
     applyFormat();
     bindEvents();
     setupDesktop();
