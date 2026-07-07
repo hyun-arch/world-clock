@@ -17,12 +17,16 @@
     }
     return String(flag).slice(0, 2).toUpperCase();
   }
-  // Crisp SVG flags from flagcdn (falls back to the code text if it can't load, e.g. offline).
+  // Bundled local SVG flags (no external requests — works offline & behind firewalls).
+  // Falls back to the 2-letter code text when there's no flag (e.g. UTC) or it fails to load.
   function flagSrc(flag) {
-    return `https://flagcdn.com/${flagToCode(flag).toLowerCase()}.svg`;
+    const code = flagToCode(flag).toLowerCase();
+    return /^[a-z]{2}$/.test(code) ? `flags/${code}.svg` : '';
   }
   function wireFlag(imgEl) {
-    if (imgEl) imgEl.addEventListener('error', () => { imgEl.style.display = 'none'; }, { once: true });
+    if (!imgEl) return;
+    if (!imgEl.getAttribute('src')) { imgEl.style.display = 'none'; return; }
+    imgEl.addEventListener('error', () => { imgEl.style.display = 'none'; }, { once: true });
   }
 
   // ── State ────────────────────────────────────────────────────
