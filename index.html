@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>World Clock · 세계 시계</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app" class="app">
+    <!-- Title bar: draggable in Electron; hosts window + app controls -->
+    <header id="titlebar" class="titlebar">
+      <div class="titlebar__brand">
+        <span class="brand__dot"></span>
+        <span class="brand">World Clock</span>
+      </div>
+      <div class="titlebar__actions no-drag">
+        <button id="btnFormat" class="seg" title="12/24시간 전환">24h</button>
+        <button id="btnAdd" class="icon-btn" title="도시 추가">＋</button>
+        <button id="btnSettings" class="icon-btn" title="설정">⚙</button>
+        <!-- Electron-only window controls, shown by app.js when desktop API exists -->
+        <span id="winControls" class="win-controls" hidden>
+          <button id="btnPin" class="icon-btn" title="항상 위에 표시">📌</button>
+          <button id="btnMin" class="icon-btn" title="최소화">－</button>
+          <button id="btnClose" class="icon-btn icon-btn--danger" title="닫기">✕</button>
+        </span>
+      </div>
+    </header>
+
+    <!-- Hero: the anchor (Korea / KST) shown large, with the meeting planner -->
+    <section id="hero" class="hero no-drag">
+      <div class="hero__top">
+        <div class="hero__id">
+          <span class="hero__flag">
+            <img class="hero__flagimg" id="heroFlag" alt="">
+            <span class="hero__code" id="heroCode">KR</span>
+          </span>
+          <div class="hero__loc">
+            <span class="hero__badge">KST · 기준</span>
+            <h1 class="hero__city" id="heroCity">서울</h1>
+            <span class="hero__country" id="heroCountry">대한민국</span>
+          </div>
+        </div>
+        <div class="hero__now">
+          <div class="hero__time" id="heroTime">--:--</div>
+          <div class="hero__date" id="heroDate"></div>
+        </div>
+      </div>
+
+      <div class="planner">
+        <div class="planner__row">
+          <span id="plannerTime" class="planner__time">한국 시간 기준 회의 시각</span>
+          <button id="btnNow" class="seg seg--accent" title="현재 시각으로">지금</button>
+        </div>
+        <input id="slider" class="slider" type="range" min="-720" max="720" step="15" value="0"
+               aria-label="한국 시간 기준 회의 시각 슬라이더" />
+        <div class="planner__scale">
+          <span>−12h</span><span>−6h</span><span>지금</span><span>+6h</span><span>+12h</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Clock cards -->
+    <main id="clocks" class="clocks"></main>
+
+    <!-- Legend -->
+    <footer class="legend no-drag">
+      <span class="legend__item"><i class="dot dot--work"></i>업무시간(9–18)</span>
+      <span class="legend__item"><i class="dot dot--edge"></i>이른/늦은 시간</span>
+      <span class="legend__item"><i class="dot dot--off"></i>야간·휴식</span>
+    </footer>
+  </div>
+
+  <!-- Add-city modal -->
+  <div id="addModal" class="modal" hidden>
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__panel">
+      <div class="modal__head">
+        <h2>도시 추가</h2>
+        <button class="icon-btn" data-close title="닫기">✕</button>
+      </div>
+      <input id="searchInput" class="search" type="text" placeholder="도시 또는 국가 검색 (예: Paris, 프랑스, Tokyo)" autocomplete="off" />
+      <ul id="searchResults" class="results"></ul>
+    </div>
+  </div>
+
+  <!-- Settings modal -->
+  <div id="settingsModal" class="modal" hidden>
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__panel">
+      <div class="modal__head">
+        <h2>설정</h2>
+        <button class="icon-btn" data-close title="닫기">✕</button>
+      </div>
+      <div class="settings">
+        <label class="setting">
+          <span>시간 표기</span>
+          <select id="setFormat">
+            <option value="24">24시간</option>
+            <option value="12">12시간 (AM/PM)</option>
+          </select>
+        </label>
+        <label class="setting">
+          <span>초 표시</span>
+          <input id="setSeconds" type="checkbox" />
+        </label>
+        <label class="setting" id="rowOpacity">
+          <span>창 투명도</span>
+          <input id="setOpacity" type="range" min="40" max="100" step="5" value="100" />
+        </label>
+        <label class="setting" id="rowAutostart" hidden>
+          <span>Windows 시작 시 자동 실행</span>
+          <input id="setAutostart" type="checkbox" />
+        </label>
+        <label class="setting" id="rowAlwaysTop" hidden>
+          <span>항상 위에 표시</span>
+          <input id="setAlwaysTop" type="checkbox" checked />
+        </label>
+        <p class="settings__note">설정은 자동 저장됩니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="timezones.js"></script>
+  <script src="clock-core.js"></script>
+  <script src="platform.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
