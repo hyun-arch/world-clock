@@ -8,14 +8,21 @@
   const WD_KO = ['일', '월', '화', '수', '목', '금', '토'];
   const MONTH_NUM = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
 
-  // Windows can't render regional-indicator flag emoji (they show as "KR").
-  // Turn the flag into its clean 2-letter ISO code for a monogram avatar instead.
+  // Windows can't render regional-indicator flag emoji (they show as "KR"),
+  // so we render a real SVG flag image and keep the 2-letter code as a fallback.
   function flagToCode(flag) {
     const cp = [...String(flag)].map((c) => c.codePointAt(0));
     if (cp.length >= 2 && cp[0] >= 0x1f1e6 && cp[0] <= 0x1f1ff) {
       return String.fromCharCode(cp[0] - 0x1f1e6 + 65) + String.fromCharCode(cp[1] - 0x1f1e6 + 65);
     }
     return String(flag).slice(0, 2).toUpperCase();
+  }
+  // Crisp SVG flags from flagcdn (falls back to the code text if it can't load, e.g. offline).
+  function flagSrc(flag) {
+    return `https://flagcdn.com/${flagToCode(flag).toLowerCase()}.svg`;
+  }
+  function wireFlag(imgEl) {
+    if (imgEl) imgEl.addEventListener('error', () => { imgEl.style.display = 'none'; }, { once: true });
   }
 
   // ── State ────────────────────────────────────────────────────
@@ -71,6 +78,7 @@
     el.draggable = true;
     el.innerHTML = `
       <div class="card__avatar">
+        <img class="card__flagimg" src="${flagSrc(city.flag)}" alt="">
         <span class="card__code">${flagToCode(city.flag)}</span>
         <i class="card__status"></i>
       </div>
@@ -89,6 +97,7 @@
     `;
     const nameEl = el.querySelector('.card__name');
     nameEl.textContent = `${city.cityKo} · ${city.countryKo}`;
+    wireFlag(el.querySelector('.card__flagimg'));
 
     const removeBtn = el.querySelector('.card__remove');
     if (removeBtn) removeBtn.addEventListener('click', (e) => { e.stopPropagation(); removeCity(city.id); });
@@ -279,12 +288,16 @@
       const added = state.cities.includes(c.id);
       li.className = 'result' + (added ? ' result--added' : '');
       li.innerHTML = `
-        <span class="result__code">${flagToCode(c.flag)}</span>
+        <span class="result__flag">
+          <img class="result__flagimg" src="${flagSrc(c.flag)}" alt="">
+          <span class="result__code">${flagToCode(c.flag)}</span>
+        </span>
         <span class="result__text">
           <div class="result__city">${c.cityKo}<span class="en">${c.city}</span></div>
           <div class="result__country">${c.countryKo}</div>
         </span>
         <span class="result__off">${ClockCore.formatOffsetVsAnchor(c.tz, now)}</span>`;
+      wireFlag(li.querySelector('.result__flagimg'));
       if (!added) li.addEventListener('click', () => { addCity(c.id); addModal.hidden = true; });
       searchResults.appendChild(li);
     }
@@ -388,6 +401,10 @@
     if (anchor) {
       $('#heroCity').textContent = anchor.cityKo;
       $('#heroCountry').textContent = anchor.countryKo;
+      $('#heroCode').textContent = flagToCode(anchor.flag);
+      const heroFlag = $('#heroFlag');
+      heroFlag.src = flagSrc(anchor.flag);
+      wireFlag(heroFlag);
     }
 
     applyFormat();
